@@ -1,6 +1,7 @@
 import requests
 import selectorlib
 import time
+import dbHelper
 
 URL = "https://programmer100.pythonanywhere.com/"
 HEADERS = {
@@ -27,11 +28,18 @@ def store(data):
 
 
 if __name__ == "__main__":
+    if (dbHelper.query_all("temperatures_times") == "no such table"):
+        dbHelper.create_table("temperatures_times", [("Date", "str"), ("temperature", "int")])
+
     while True:
         now = time.time()
-        now = time.strftime("%y-%m-%d-%H-%M-%S")+","
+        #now = time.strftime("%y-%m-%d-%H-%M-%S")+","
+        now = time.strftime("%y-%m-%d-%H-%M-%S")
+
         scraped = scrape(URL)
         extracted = extract(scraped)
-        store(now+extracted)
-        print(now+extracted)
+
+        #store(now+extracted)
+        dbHelper.insert_sigle("temperatures_times",[now,int(extracted)])
+        print(now+","+extracted)
         time.sleep(2)

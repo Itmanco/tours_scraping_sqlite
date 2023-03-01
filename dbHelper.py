@@ -5,24 +5,39 @@ connection = sqlite3.connect("data.db")
 cursor = connection.cursor()
 
 
-
-# Query certain colummns
-cursor.execute("SELECT band, date FROM events WHERE date='2023-10-24'")
-rows = cursor.fetchall()
-print(rows)
-
-#Inser new rows
-new_rows =[('Cats City', 'Savage cats rock', '2024-10-29'),
-           ('Dogs City', 'Savage fighters methal', '2025-10-29')]
-
-cursor.executemany("INSERT INTO events VALUES (?,?,?)", new_rows)
-connection.commit()
-
-
 def query_all(table_name):
     # Query all data
-    cursor.execute(f"select * from {table_name}")
-    return cursor.fetchall()
+    try:
+        cursor.execute(f"select * from {table_name}")
+        return cursor.fetchall()
+    except sqlite3.OperationalError:
+        return "no such table"
+
+
+def event_in_table(row):
+    band, city, date = row
+    cursor.execute("SELECT * FROM events WHERE band=? AND city=? AND date=?", (band, city, date))
+    rows = cursor.fetchall()
+    if len(rows) > 0:
+        return True
+    else:
+        return False
+
+def create_table(table_name, columns):
+    first_cicle = True
+    script = f"CREATE TABLE '{table_name}' ("
+    for item in columns:
+        if first_cicle:
+            script = script + f"'{item[0]}' TEXT"
+            first_cicle = False
+        elif item[1] == "str":
+            script = script + f",'{item[0]}' TEXT"
+        elif item[1] == "int":
+            script = script + f",'{item[0]}' INTEGER"
+    script = script+")"
+    cursor.execute(script)
+    connection.commit()
+
 
 
 def query_with_condition(table_name, condition):
@@ -32,7 +47,17 @@ def query_with_condition(table_name, condition):
 
 
 def insert_sigle(table_name, row):
-    cursor.execute(f"INSERT INTO {table_name} VALUES (?,?,?)", row)
+
+    script = f"INSERT INTO {table_name} VALUES ("
+    first_Time = True
+    for item in row:
+        if first_Time:
+            first_Time = False
+            script = script + f"'{item}'"
+        else:
+            script = script + f",'{item}'"
+    script = script+")"
+    cursor.execute(script)
     connection.commit()
     return 0
 

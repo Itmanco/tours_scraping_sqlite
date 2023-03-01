@@ -2,6 +2,7 @@ import requests
 import selectorlib
 from send_email import send_email
 import time
+import dbHelper
 
 URL = "https://programmer100.pythonanywhere.com/tours/"
 HEADERS = {
@@ -26,6 +27,12 @@ def store(data):
     with open("data.txt", "a") as file:
         file.write(extracted + "\n")
 
+
+def dbStore(row):
+    dbHelper.insert_sigle("events", row)
+
+
+
 def get_sended_emails():
     with open("data.txt", "r") as file:
         return file.read()
@@ -35,11 +42,14 @@ if __name__ == "__main__":
     while True:
         scraped = scrape(URL)
         extracted = extract(scraped)
+        row = extracted.split(",")
+        row = [item.strip() for item in row]
         if extracted.lower() != "no upcoming tours":
             historical = get_sended_emails()
-            if extracted not in historical:
+            if not dbHelper.event_in_table(row):
                 send_email(extracted)
-                store(extracted)
+                #store(extracted)
+                dbStore(row)
         print(extracted)
         time.sleep(5)
 
